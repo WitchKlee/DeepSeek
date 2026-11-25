@@ -22,15 +22,11 @@ Future<void> showDsSettingsSheet(
   BuildContext context, {
   SettingsTab initialTab = SettingsTab.general,
 }) {
-  final ds = context.ds;
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: ds.bgLayer2,
-    barrierColor: Colors.black.withValues(alpha: ds.isDark ? 0.60 : 0.36),
-    shape: const RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-    ),
+    backgroundColor: Colors.transparent,
+    barrierColor: Colors.black.withValues(alpha: 0.48),
     builder: (ctx) => _SettingsSheetContent(initialTab: initialTab),
   );
 }
@@ -241,8 +237,18 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
-      child: SizedBox(
+      child: Container(
         height: sheetH,
+        decoration: BoxDecoration(
+          color: ds.bgLayer2,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          border: ds.isDark
+              ? Border(
+                  top: BorderSide(color: Colors.white.withValues(alpha: 0.08)),
+                )
+              : null,
+        ),
+        clipBehavior: Clip.antiAlias,
         child: SafeArea(
           top: false,
           child: Column(

@@ -121,12 +121,10 @@ class _ChatComposerState extends State<ChatComposer>
       widget.onNeedApiKey();
       return;
     }
-    final ds = context.ds;
     final s = settings.strings;
 
     await showModalBottomSheet<void>(
       context: context,
-      backgroundColor: ds.bgLayer2,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),

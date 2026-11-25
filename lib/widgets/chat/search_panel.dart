@@ -252,10 +252,8 @@ class _SourceCard extends StatelessWidget {
 
 /// Compact citation preview bottom sheet shown when tapping an inline `[citation:N]` badge.
 void showCitationPreviewSheet(BuildContext context, ReplySource source) {
-  final ds = context.ds;
   showModalBottomSheet<void>(
     context: context,
-    backgroundColor: ds.bgLayer2,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
     ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../models/chat_models.dart';
@@ -88,11 +89,22 @@ class _HomeScreenState extends State<HomeScreen> {
       _scrollToBottomIfFollowing();
     }
 
-    return Stack(
-      children: [
-        Scaffold(
-          key: _scaffoldKey,
-          backgroundColor: ds.bgBase,
+    final overlayStyle = SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: ds.isDark ? Brightness.light : Brightness.dark,
+      statusBarBrightness: ds.isDark ? Brightness.dark : Brightness.light,
+      systemNavigationBarColor: Colors.transparent,
+      systemNavigationBarIconBrightness:
+          ds.isDark ? Brightness.light : Brightness.dark,
+    );
+
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: overlayStyle,
+      child: Stack(
+        children: [
+          Scaffold(
+            key: _scaffoldKey,
+            backgroundColor: ds.bgBase,
           drawer: ChatDrawer(
             onOpenSettings: () => showDsSettingsSheet(
               context,
@@ -209,7 +221,8 @@ class _HomeScreenState extends State<HomeScreen> {
               onClose: chat.closeSearchPanel,
             ),
           ),
-      ],
+        ],
+      ),
     );
   }
 

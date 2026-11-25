@@ -319,6 +319,15 @@ class DsTheme {
         onSurface: c.labelPrimary,
       ),
       dividerColor: c.borderL2,
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: c.bgLayer2,
+        modalBackgroundColor: c.bgLayer2,
+        surfaceTintColor: Colors.transparent,
+      ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: c.bgLayer2,
+        surfaceTintColor: Colors.transparent,
+      ),
       textSelectionTheme: TextSelectionThemeData(
         cursorColor: c.brandText,
         selectionColor: c.brandPrimary.withValues(alpha: 0.2),
