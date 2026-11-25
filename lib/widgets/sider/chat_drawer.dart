@@ -179,34 +179,44 @@ class _ChatDrawerState extends State<ChatDrawer> {
 
               // Time-grouped session list
               Expanded(
-                child: ListView(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  children: [
-                    for (final g in groups) ...[
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+                child: groups.isEmpty
+                    ? Center(
                         child: Text(
-                          g.label,
+                          s.noHistoryChats,
                           style: TextStyle(
                             fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: ds.labelTertiary,
+                            color: ds.labelCaption,
                           ),
                         ),
+                      )
+                    : ListView(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        children: [
+                          for (final g in groups) ...[
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(10, 10, 10, 4),
+                              child: Text(
+                                g.label,
+                                style: TextStyle(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: ds.labelTertiary,
+                                ),
+                              ),
+                            ),
+                            for (final item in g.sessions)
+                              _buildSessionRow(
+                                context: context,
+                                item: item,
+                                isActive: item.id == activeId,
+                                fallbackTitle: s.untitledChat,
+                                ds: ds,
+                                renameLabel: s.rename,
+                                deleteLabel: s.delete,
+                              ),
+                          ],
+                        ],
                       ),
-                      for (final item in g.sessions)
-                        _buildSessionRow(
-                          context: context,
-                          item: item,
-                          isActive: item.id == activeId,
-                          fallbackTitle: s.untitledChat,
-                          ds: ds,
-                          renameLabel: s.rename,
-                          deleteLabel: s.delete,
-                        ),
-                    ],
-                  ],
-                ),
               ),
 
               // Footer Settings entry

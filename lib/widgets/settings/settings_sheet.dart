@@ -45,6 +45,7 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
   // API Key form
   bool _editingApiKey = false;
   bool _verifyingKey = false;
+  bool _advancedOpen = false;
   String? _apiKeyError;
   final TextEditingController _apiKeyController = TextEditingController();
   final TextEditingController _apiOriginController = TextEditingController();
@@ -65,6 +66,7 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
     final settings = context.read<SettingsProvider>().settings;
     _editingApiKey = settings.apiKey == null || settings.apiKey!.isEmpty;
     _apiOriginController.text = settings.apiOrigin;
+    _advancedOpen = settings.apiOrigin != AppSettings.defaultApiOrigin;
   }
 
   @override
@@ -72,6 +74,22 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
     _apiKeyController.dispose();
     _apiOriginController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveApiOrigin(SettingsProvider prov) async {
+    final prev = prov.settings.apiOrigin;
+    final raw = _apiOriginController.text.trim().replaceAll(RegExp(r'/+$'), '');
+    final next = raw.isEmpty ? AppSettings.defaultApiOrigin : raw;
+    if (next == prev) {
+      if (_apiOriginController.text != next) {
+        _apiOriginController.text = next;
+      }
+      return;
+    }
+    await prov.setApiOrigin(next);
+    if (!mounted) return;
+    _apiOriginController.text = next;
+    DsToast.show(context, prov.strings.apiOriginSaved);
   }
 
   Future<void> _submitApiKey() async {
@@ -232,8 +250,10 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
     final settings = settingsProv.settings;
     final s = settingsProv.strings;
     final chat = context.watch<ChatProvider>();
-    final sheetH = (MediaQuery.of(context).size.height - 64).clamp(420.0, 760.0);
-    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+    final media = MediaQuery.of(context);
+    final bottomInset = media.viewInsets.bottom;
+    final maxAvailableH = media.size.height - media.padding.top - bottomInset - 24;
+    final sheetH = maxAvailableH.clamp(260.0, 760.0);
 
     return Padding(
       padding: EdgeInsets.only(bottom: bottomInset),
@@ -446,11 +466,22 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
                   value: curProvince ?? '',
                   isExpanded: true,
                   items: [
-                    DropdownMenuItem(value: '', child: Text(s.selectProvince)),
+                    DropdownMenuItem(
+                      value: '',
+                      child: Text(
+                        s.selectProvince,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     for (final entry in kProvinceNames.entries)
                       DropdownMenuItem(
                         value: entry.key,
-                        child: Text(entry.value),
+                        child: Text(
+                          entry.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                   onChanged: (v) {
@@ -469,11 +500,22 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
                   isExpanded: true,
                   enabled: curProvince != null && cities.isNotEmpty,
                   items: [
-                    DropdownMenuItem(value: '', child: Text(s.selectCity)),
+                    DropdownMenuItem(
+                      value: '',
+                      child: Text(
+                        s.selectCity,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
                     for (final entry in cities)
                       DropdownMenuItem(
                         value: entry.key,
-                        child: Text(entry.value),
+                        child: Text(
+                          entry.value,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
                   ],
                   onChanged: (v) {
@@ -501,11 +543,22 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
             value: settings.location?.region ?? '',
             isExpanded: true,
             items: [
-              DropdownMenuItem(value: '', child: Text(s.selectRegion)),
+              DropdownMenuItem(
+                value: '',
+                child: Text(
+                  s.selectRegion,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               for (final code in kRegionCodes)
                 DropdownMenuItem(
                   value: code,
-                  child: Text(getRegionDisplayName(code, settings.locale)),
+                  child: Text(
+                    getRegionDisplayName(code, settings.locale),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
             ],
             onChanged: (v) {
@@ -559,13 +612,14 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
                     children: [
                       Expanded(
                         child: Text(
-                          '*' * (settings.apiKey!.length.clamp(12, 32)),
+                          '•' * 18,
                           maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          overflow: TextOverflow.clip,
                           style: TextStyle(
-                            fontSize: 15,
-                            letterSpacing: 1.5,
-                            color: ds.labelCaption,
+                            fontSize: 16,
+                            height: 1.0,
+                            letterSpacing: 2.0,
+                            color: ds.labelTertiary,
                           ),
                         ),
                       ),
@@ -633,39 +687,68 @@ class _SettingsSheetContentState extends State<_SettingsSheetContent> {
                   ],
                 ),
 
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
 
-              // Optional API Origin
-              Text(
-                s.apiOriginLabel,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: ds.labelTertiary,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Container(
-                height: 42,
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                decoration: BoxDecoration(
-                  color: ds.loginInput,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: ds.borderL2Thin),
-                ),
-                alignment: Alignment.center,
-                child: TextField(
-                  controller: _apiOriginController,
-                  style: TextStyle(fontSize: 13, color: ds.labelPrimary),
-                  decoration: const InputDecoration(
-                    isDense: true,
-                    border: InputBorder.none,
-                    hintText: 'https://api.deepseek.com',
+              // Collapsible Advanced section for custom API Origin
+              GestureDetector(
+                onTap: () => setState(() => _advancedOpen = !_advancedOpen),
+                behavior: HitTestBehavior.opaque,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        s.advancedSettings,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: ds.labelTertiary,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(
+                        _advancedOpen
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        size: 16,
+                        color: ds.labelTertiary,
+                      ),
+                    ],
                   ),
-                  onSubmitted: (v) => prov.setApiOrigin(v),
-                  onTapOutside: (_) =>
-                      prov.setApiOrigin(_apiOriginController.text),
                 ),
               ),
+              if (_advancedOpen) ...[
+                const SizedBox(height: 8),
+                Text(
+                  s.apiOriginLabel,
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: ds.labelTertiary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  height: 42,
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  decoration: BoxDecoration(
+                    color: ds.loginInput,
+                    borderRadius: BorderRadius.circular(18),
+                    border: Border.all(color: ds.borderL2Thin),
+                  ),
+                  alignment: Alignment.center,
+                  child: TextField(
+                    controller: _apiOriginController,
+                    style: TextStyle(fontSize: 13, color: ds.labelPrimary),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      border: InputBorder.none,
+                      hintText: 'https://api.deepseek.com',
+                    ),
+                    onSubmitted: (_) => _saveApiOrigin(prov),
+                    onTapOutside: (_) => _saveApiOrigin(prov),
+                  ),
+                ),
+              ],
 
               Divider(height: 32, color: ds.borderL2Thin),
 

@@ -89,6 +89,9 @@ class AppStrings {
   String get notSet => isZh ? '未设置' : 'Not set';
   String get modelLabel => isZh ? '对话模型' : 'Model';
   String get apiOriginLabel => isZh ? '接口地址 (API Origin)' : 'API Origin';
+  String get apiOriginSaved => isZh ? '接口地址已保存' : 'API Origin saved';
+  String get advancedSettings => isZh ? '高级设置' : 'Advanced';
+  String get noHistoryChats => isZh ? '暂无历史对话' : 'No chat history yet';
 
   // API Key
   String get enterApiKeyHeader => isZh ? '输入 API Key 开始使用' : 'Enter an API Key to get started';
