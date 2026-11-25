@@ -1,0 +1,117 @@
+name: Android Release Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: 'Optional tag to publish a GitHub Release (e.g. v1.0.0)'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-android:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: gradle
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.50.0'
+          channel: stable
+          cache: true
+
+      - name: Accept Android SDK licenses
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Analyze & Test
+        run: |
+          flutter analyze --no-fatal-infos
+          flutter test
+
+      - name: Configure optional release signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ]; then
+            echo "$KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+            cat <<EOF > android/key.properties
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEY_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=upload-keystore.jks
+          EOF
+            echo "Release keystore configured."
+          else
+            echo "No release keystore secret configured; using default signing config."
+          fi
+
+      - name: Build Android Release APKs (Universal & Split-per-ABI)
+        run: |
+          flutter build apk --release
+          flutter build apk --release --split-per-abi
+
+      - name: Prepare Release Assets
+        run: |
+          mkdir -p release-assets
+          TAG_NAME="${GITHUB_REF_NAME}"
+          if [ -n "${{ github.event.inputs.release_tag }}" ]; then
+            TAG_NAME="${{ github.event.inputs.release_tag }}"
+          fi
+          SAFE_TAG="${TAG_NAME#v}"
+
+          cp build/app/outputs/flutter-apk/app-release.apk \
+            "release-assets/DeepSeek-${SAFE_TAG}-universal.apk"
+          cp build/app/outputs/flutter-apk/app-arm64-v8a-release.apk \
+            "release-assets/DeepSeek-${SAFE_TAG}-arm64-v8a.apk"
+          cp build/app/outputs/flutter-apk/app-armeabi-v7a-release.apk \
+            "release-assets/DeepSeek-${SAFE_TAG}-armeabi-v7a.apk"
+          cp build/app/outputs/flutter-apk/app-x86_64-release.apk \
+            "release-assets/DeepSeek-${SAFE_TAG}-x86_64.apk"
+
+          (cd release-assets && sha256sum *.apk > SHA256SUMS.txt)
+          ls -lh release-assets
+
+      - name: Upload APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepseek-android-apks
+          path: release-assets/*
+          retention-days: 30
+
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v') || github.event.inputs.release_tag != ''
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref_name }}
+          name: DeepSeek Android ${{ github.event.inputs.release_tag != '' && github.event.inputs.release_tag || github.ref_name }}
+          generate_release_notes: true
+          files: |
+            release-assets/*.apk
+            release-assets/SHA256SUMS.txt
