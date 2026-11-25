@@ -346,7 +346,7 @@ class _ChatComposerState extends State<ChatComposer>
             padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
             child: LayoutBuilder(
               builder: (ctx, constraints) {
-                final compact = constraints.maxWidth < 310;
+                final compact = constraints.maxWidth < 265;
                 return Row(
                   children: [
                     // DeepThink toggle chip
@@ -356,7 +356,7 @@ class _ChatComposerState extends State<ChatComposer>
                       active: settings.thinking,
                       onTap: () => settingsProv.setThinking(!settings.thinking),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     // Smart Search toggle chip
                     _ModeToggleChip(
                       iconSvg: DsIcons.globe,
@@ -457,7 +457,7 @@ class _ModeToggleChip extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 180),
         height: 34,
-        padding: EdgeInsets.symmetric(horizontal: label == null ? 10 : 12),
+        padding: const EdgeInsets.symmetric(horizontal: 10),
         decoration: BoxDecoration(
           color: active ? ds.ghostActiveFill : Colors.transparent,
           borderRadius: BorderRadius.circular(18),

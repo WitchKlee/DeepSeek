@@ -105,7 +105,13 @@ class _HomeScreenState extends State<HomeScreen> {
           Scaffold(
             key: _scaffoldKey,
             backgroundColor: ds.bgBase,
-          drawer: ChatDrawer(
+            drawerEdgeDragWidth: MediaQuery.of(context).size.width,
+            onDrawerChanged: (isOpened) {
+              if (isOpened) {
+                FocusScope.of(context).unfocus();
+              }
+            },
+            drawer: ChatDrawer(
             onOpenSettings: () => showDsSettingsSheet(
               context,
               initialTab: SettingsTab.general,
